@@ -1,41 +1,284 @@
-Some Most Amazing Use Cases of Websockets
+# WebSocket Challenge : Real-Time Chat Room
 
-## 1. Real-time Feeds
+## Objective
 
-Give your apps the ability to give real-time feeds, notifications, social likes, shares and instantly share all that with your users in real-time. Wouldn’t that be extremely engaging for your audience?
+Build a small real-time chat application using WebSockets.
 
-## 2. Real-time Multiplayer Gaming
+The goal is to practice the concepts covered during the workshop:
 
-Websockets API allow you to create the same gaming experience that users get on a mobile device. With the ability to send receive data at any given point of time without having to poll the webservers, creates space for building real-time multiplayer gaming.
+* WebSocket connection
+* Connection lifecycle
+* Sending and receiving messages
+* Broadcasting
+* Rooms
+* Message protocols
+* Connection status
+* Disconnection handling
 
-## 3. Real-time Collaborative Editing
+---
 
-Now you all have used google docs and have wondered how this works. With emergence of HTML5 Websockets, creating collaborative applications that allow users to work on same document becomes greatly simplified.
+## Requirements
 
-## 4. Real-time Data Visualization
+### 1. WebSocket Connection
 
-Be it marketing trends, sales graphs, analytics, or data science plots, with HTML5 Websockets you can create visually appealing data representations that will automatically update as and when new data arrives in your backend, and that too without having the need to poll the data.
+Create a WebSocket endpoint and allow clients to connect to the server.
 
-## 5. Real-time Multimedia Chat
+The client should display its connection state:
 
-Let’s face it. If you are an application developer, you have always wanted to create a chat server, either as a college project or as one of your client’s project feature. But you hit the wall by adopting the traditional approaches that I discussed above. Well, try HTML5 Websockets of you want to build a chat server this time. Or connect with my team, they have developed one and are already using in production now. Contact me.
+```text
+🟢 Connected
+🟡 Connecting...
+🔴 Disconnected
+```
 
-## 6. Audio / Video Chat with WebRTC
+---
 
-HTML5 Websockets are a best candidate to be used as a signaling mechanism for WebRTC. If you are not familiar with WebRTC, read my post “The Amazing Things WebRTC Can Do“. The WebRTC draft leaves the signaling layer as an abstract and offers the implementer to create his own signaling mechanism. Websockets are a great candidate for that as they offer full duplex communication.
+### 2. User Identity
 
-## 7. E-Learning Applications
+When connecting, each client provides a username.
 
-With HTML5 Websockets, E-learning is one industry that is being revolutionized rapidly than any other industry. With developers creating out of the box real-time features, transforming online learning as an extremely interactive way to engage students and offer remote classrooms just as real as a physical class room.
+Example:
 
-## 8. Real-time Location Apps
+```text
+Alice connected
+Bob connected
+```
 
-Building applications like location based intelligence, Geo fencing, track and trace becomes all the more simplified with HTML5 Websockets allowing developers to share location updates in real time and create amazing work flows with the real time data.
+The server should associate the WebSocket connection with the user.
 
-## 9. Real-time User Behavior
+---
 
-A lot of E-commerce space is using click stream data to analyze user behavior in real time and that is helping them analyze how user interacts with there web applications and instantly offer them recommended content. Another aspect of it allows error detection faced by consumers to be reported in real-time.
+### 3. Message Protocol
 
-## 10. Real-time Sports / Event Updates
+Messages must follow a defined structure.
 
-Users are so used to of real-time facebook and twitter updates, and that has set very high standards for other web and mobile applications. By using HTML5 Websockets you can use a common platform for all your channels to provide real time updates to your users and hence build better and more engaging apps.
+For example:
+
+```json
+{
+  "type": "chat.message",
+  "data": {
+    "message": "Hello everyone!"
+  }
+}
+```
+
+At minimum, support:
+
+```text
+chat.message
+user.joined
+user.left
+error
+```
+
+---
+
+### 4. Broadcasting
+
+When a user sends a message, broadcast it to the other users in the same room.
+
+Example:
+
+```text
+Alice → "Hello!"
+
+              Server
+             /      \
+            ↓        ↓
+          Bob      Charlie
+```
+
+The sender should also see their own message.
+
+---
+
+### 5. Rooms
+
+Users must be able to join a room.
+
+Example:
+
+```text
+Room: developers
+
+Alice
+Bob
+Charlie
+
+Room: gaming
+
+David
+Emma
+```
+
+A message sent in `developers` must **not** appear in `gaming`.
+
+---
+
+### 6. Join / Leave Events
+
+When someone joins a room:
+
+```text
+System:
+Alice joined the room.
+```
+
+When they disconnect:
+
+```text
+System:
+Alice left the room.
+```
+
+---
+
+### 7. Connection Handling
+
+The application must correctly handle:
+
+* New connections
+* Normal disconnections
+* Unexpected disconnections
+* Invalid messages
+* Empty messages
+
+The server should not crash when a client disconnects unexpectedly.
+
+---
+
+### 8. Reconnection
+
+If the connection is lost, the client should attempt to reconnect.
+
+Use a simple delay strategy:
+
+```text
+1 second
+   ↓
+2 seconds
+   ↓
+4 seconds
+   ↓
+8 seconds
+```
+
+Stop retrying after a reasonable limit or allow the user to retry manually.
+
+---
+
+# Bonus Challenges
+
+These are optional for participants who want to go further.
+
+## Bonus 1 : Typing Indicator
+
+Implement:
+
+```text
+Alice is typing...
+```
+
+Use WebSocket events instead of HTTP requests.
+
+Example:
+
+```json
+{
+  "type": "typing.start"
+}
+```
+
+and:
+
+```json
+{
+  "type": "typing.stop"
+}
+```
+
+---
+
+## Bonus 2 : Authentication
+
+Require users to authenticate before joining a room.
+
+The server must reject unauthorized clients.
+
+---
+
+## Bonus 3 : Multiple Server Instances
+
+Run two WebSocket server instances.
+
+```text
+Client A
+   ↓
+Server A
+
+Client B
+   ↓
+Server B
+```
+
+Use Redis Pub/Sub so that messages can travel between users connected to different servers.
+
+---
+
+# Questions to Think About
+
+Before considering the challenge complete, be able to answer:
+
+1. Why are WebSockets useful for this application?
+2. What happens during the WebSocket handshake?
+3. What happens when a client disconnects unexpectedly?
+4. How does the server know which clients belong to a room?
+5. Why isn't a room a native WebSocket protocol feature?
+6. What happens if Alice is connected to Server A and Bob is connected to Server B?
+7. Why would Redis Pub/Sub help?
+8. Why should the server validate messages instead of trusting the client?
+9. What happens if the client reconnects?
+10. What could happen if thousands of clients reconnect simultaneously?
+
+---
+
+# Expected Result
+
+By completing the challenge, participants should have a working real-time application demonstrating:
+
+```text
+              WebSocket
+                  │
+                  ▼
+             Connection
+                  │
+                  ▼
+             User joins
+                  │
+                  ▼
+                Room
+                  │
+                  ▼
+             Send message
+                  │
+                  ▼
+             Server validates
+                  │
+                  ▼
+             Broadcasting
+             /     |      \
+            /      |       \
+         User A  User B   User C
+                  │
+                  ▼
+             Disconnect
+                  │
+                  ▼
+              Reconnect
+```
+
+* ### the implementation language/framework is not strictly required. 
+* ### participants may use technologies such as FastAPI, Node.js, or another WebSocket-compatible backend. 
+* ### check the workshop resources and materials before working on this.
+## best of luck !!
